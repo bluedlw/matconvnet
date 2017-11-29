@@ -260,7 +260,8 @@ for t=1:params.batchSize:numel(subset)
   % Accumulate gradient.
   if strcmp(mode, 'train')
     if ~isempty(parserv), parserv.sync() ; end
-    state = accumulateGradients(net, state, params, batchSize, parserv) ;
+    %state = accumulateGradients(net, state, params, batchSize, parserv) ;
+    state = accumulateGradients(net, state, params, 1, parserv) ; % instead, do the normalization in the loss layer
   end
 
   % Get statistics.

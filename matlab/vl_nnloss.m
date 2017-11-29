@@ -1,4 +1,4 @@
-function y = vl_nnloss(x,c,varargin)
+function [y, normalizer] = vl_nnloss(x,c,varargin)
 %VL_NNLOSS CNN categorical or attribute loss.
 %   Y = VL_NNLOSS(X, C) computes the loss incurred by the prediction
 %   scores X given the categorical labels C.
@@ -208,6 +208,11 @@ if ~isempty(opts.instanceWeights)
   end
 end
 
+normalizer = inputSize(1) * inputSize(2) * inputSize(4);
+if ~isempty(instanceWeights)
+    normalizer = sum(instanceWeights(:) ~= 0);
+end
+
 % --------------------------------------------------------------------
 % Do the work
 % --------------------------------------------------------------------
@@ -262,9 +267,15 @@ if nargin <= 2 || isempty(dzdy)
   else
     y = sum(t(:));
   end
+  if normalizer > 0
+      y = y / normalizer;
+  end
 else
   if ~isempty(instanceWeights)
     dzdy = dzdy * instanceWeights ;
+  end
+  if normalizer > 0
+      dzdy = dzdy / normalizer;
   end
   switch lower(opts.loss)
     case {'classerror', 'topkerror'}
