@@ -260,8 +260,9 @@ for t=1:params.batchSize:numel(subset)
   % Accumulate gradient.
   if strcmp(mode, 'train')
     if ~isempty(parserv), parserv.sync() ; end
-    %state = accumulateGradients(net, state, params, batchSize, parserv) ;
-    state = accumulateGradients(net, state, params, 1, parserv) ; % instead, do the normalization in the loss layer
+    % state = accumulateGradients(net, state, params, batchSize, parserv) ;
+    % instead, do the normalization in the loss layer, dlw
+    state = accumulateGradients(net, state, params, batchSize, parserv) ;
   end
 
   % Get statistics.
@@ -318,7 +319,8 @@ function state = accumulateGradients(net, state, params, batchSize, parserv)
 % -------------------------------------------------------------------------
 numGpus = numel(params.gpus) ;
 otherGpus = setdiff(1:numGpus, labindex) ;
-
+batchSizeAvg = batchSize;
+batchSize = 1;
 for p=1:numel(net.params)
 
   if ~isempty(parserv)
@@ -333,7 +335,7 @@ for p=1:numel(net.params)
       thisLR = net.params(p).learningRate ;
       net.params(p).value = vl_taccum(...
           1 - thisLR, net.params(p).value, ...
-          (thisLR/batchSize/net.params(p).fanout),  parDer) ;
+          (thisLR/batchSizeAvg/net.params(p).fanout),  parDer) ;
 
     case 'gradient'
       thisDecay = params.weightDecay * net.params(p).weightDecay ;

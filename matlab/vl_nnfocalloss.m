@@ -7,6 +7,13 @@ opts.lossType = 'sigmoid';
 opts = vl_argparse(opts, varargin);
 
 %c = gather(c);
+bgLabel = -1;
+if size(x, 3) == 1
+    lossType = 'sigmoid'; % binary
+else
+    lossType = 'softmax';
+    bgLabel = 1;          % set fixed to 1, foreground as 2,3,4....
+end
 
 if isa(x, 'gpuArray')
   switch classUnderlying(x) ;
@@ -59,7 +66,7 @@ if isempty(dzdy)
         pt = sigmoid(xt);
         y = -(1-pt).^opts.gamma .* log(pt);
         y = sum(y(:)' * instanceWeight(:)) / normalizer;
-    else if strcmp(opts.lossType, 'softmaxlog')
+    elseif strcmp(opts.lossType, 'softmaxlog')
         ;
     end
     
@@ -71,7 +78,7 @@ else
         y = c .* (1-pt).^opts.gamma .* (opts.gamma * pt .* log(pt) + pt - 1);
         y = bsxfun(@times, y, dzdy);
         y = y / normalizer;
-    else if strcmp(opts.lossType, 'softmaxlog')
+    elseif strcmp(opts.lossType, 'softmaxlog')
         ;
     end
     

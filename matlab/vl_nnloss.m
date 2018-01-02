@@ -274,9 +274,11 @@ else
   if ~isempty(instanceWeights)
     dzdy = dzdy * instanceWeights ;
   end
+  
   if normalizer > 0
       dzdy = dzdy / normalizer;
   end
+  
   switch lower(opts.loss)
     case {'classerror', 'topkerror'}
       y = zerosLike(x) ;
@@ -312,6 +314,7 @@ else
     case 'hinge'
       y = - dzdy .* c .* (c.*x < 1) ;
   end
+  
 end
 
 % --------------------------------------------------------------------
