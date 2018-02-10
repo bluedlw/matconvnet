@@ -1,14 +1,11 @@
 classdef FocalLoss < dagnn.Loss
     
    properties
-       lossType = 'sigmoid'
        alpha = 0.25
        gamma = 2
-       instanceWeight = 1.
+       instanceWeights = 1.
        instanceMask = []
-       
        warmup = 1000
-       
        normalizer = 1
        iter = 0
    end
@@ -20,14 +17,15 @@ classdef FocalLoss < dagnn.Loss
    methods
        function outputs = forward(obj, inputs, params)
            obj.iter = obj.iter + 1;
-           if obj.iter < obj.warmup
-               gamma_ = 0;
-           else
-               gamma_ = obj.gamma;
-           end
+%            if obj.iter < obj.warmup
+%                gamma_ = 0;
+%            else
+%                gamma_ = obj.gamma;
+%            end
+           gamma_ = obj.gamma;
            [outputs{1}, normalizer_] = vl_nnfocalloss(inputs{1}, inputs{2}, [], ...
-               'alpha', obj.alpha, 'gamma', gamma_, 'lossType', obj.lossType);
-           outputs{1} = outputs{1} * obj.instanceWeight;
+               'alpha', obj.alpha, 'gamma', gamma_, 'loss', obj.loss);
+           outputs{1} = outputs{1} * obj.instanceWeights;
            
            obj.normalizer = normalizer_;
            
@@ -35,9 +33,15 @@ classdef FocalLoss < dagnn.Loss
        end
        
        function [derInputs, derParams] = backward(obj, inputs, params, derOutputs)
+%            if obj.iter < obj.warmup
+%                gamma_ = 0;
+%            else
+%                gamma_ = obj.gamma;
+%            end
+           gamma_ = obj.gamma;
            [derInputs{1}, normalizer_]= vl_nnfocalloss(inputs{1}, inputs{2}, derOutputs{1}, ...
-               'alpha', obj.alpha, 'gamma', obj.gamma, 'lossType', obj.lossType);
-           derInputs{1} = derInputs{1} * obj.instanceWeight;
+               'alpha', obj.alpha, 'gamma', gamma_, 'loss', obj.loss);
+           derInputs{1} = derInputs{1} * obj.instanceWeights;
            derInputs{2} = [];
            derParams = {};
        end
@@ -67,7 +71,7 @@ classdef FocalLoss < dagnn.Loss
        
        function obj = FocalLoss(varargin)
            obj.load(varargin);
-           obj.loss = 'focalloss';
+           %obj.loss = 'focalloss';
        end
    end
     
