@@ -5,7 +5,7 @@ classdef FocalLoss < dagnn.Loss
        gamma = 2
        instanceWeights = 1.
        instanceMask = []
-       warmup = 1000
+       warmup = 100
        normalizer = 1
        iter = 0
    end
@@ -17,15 +17,14 @@ classdef FocalLoss < dagnn.Loss
    methods
        function outputs = forward(obj, inputs, params)
            obj.iter = obj.iter + 1;
-%            if obj.iter < obj.warmup
-%                gamma_ = 0;
-%            else
-%                gamma_ = obj.gamma;
-%            end
+           S = 1;
+           if obj.iter < obj.warmup
+                S = 0.1;
+           end
            gamma_ = obj.gamma;
            [outputs{1}, normalizer_] = vl_nnfocalloss(inputs{1}, inputs{2}, [], ...
                'alpha', obj.alpha, 'gamma', gamma_, 'loss', obj.loss);
-           outputs{1} = outputs{1} * obj.instanceWeights;
+           outputs{1} = outputs{1} * obj.instanceWeights * S;
            
            obj.normalizer = normalizer_;
            
@@ -33,15 +32,14 @@ classdef FocalLoss < dagnn.Loss
        end
        
        function [derInputs, derParams] = backward(obj, inputs, params, derOutputs)
-%            if obj.iter < obj.warmup
-%                gamma_ = 0;
-%            else
-%                gamma_ = obj.gamma;
-%            end
+           S = 1;
+           if obj.iter < obj.warmup
+               S = 0.1;
+           end
            gamma_ = obj.gamma;
            [derInputs{1}, normalizer_]= vl_nnfocalloss(inputs{1}, inputs{2}, derOutputs{1}, ...
                'alpha', obj.alpha, 'gamma', gamma_, 'loss', obj.loss);
-           derInputs{1} = derInputs{1} * obj.instanceWeights;
+           derInputs{1} = derInputs{1} * obj.instanceWeights * S;
            derInputs{2} = [];
            derParams = {};
        end
