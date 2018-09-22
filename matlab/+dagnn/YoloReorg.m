@@ -82,6 +82,12 @@ classdef YoloReorg < dagnn.ElementWise
             
         end
         
+        function rfs = getReceptiveFields(obj)
+            rfs(1,1).size = obj.stride ;
+            rfs(1,1).stride = obj.stride ;
+            rfs(1,1).offset = (obj.stride + 1) / 2 ;
+        end
+        
         function obj = YoloReorg(varargin)
             obj.load(varargin);
             if numel(obj.stride) == 1

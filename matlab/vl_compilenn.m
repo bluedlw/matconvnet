@@ -168,16 +168,16 @@ addpath(fullfile(root, 'matlab')) ;
 % --------------------------------------------------------------------
 
 opts.continue         = false;
-opts.enableGpu        = false;
+opts.enableGpu        = true;
 opts.enableImreadJpeg = true;
-opts.enableCudnn      = false;
+opts.enableCudnn      = true;
 opts.enableDouble     = true;
 opts.imageLibrary = [] ;
 opts.imageLibraryCompileFlags = {} ;
 opts.imageLibraryLinkFlags = [] ;
 opts.verbose          = 0;
 opts.debug            = false;
-opts.cudaMethod       = [] ;
+opts.cudaMethod       = 'nvcc' ;
 opts.cudaRoot         = [] ;
 opts.cudaArch         = [] ;
 opts.defCudaArch      = [...
@@ -185,7 +185,7 @@ opts.defCudaArch      = [...
   '-gencode=arch=compute_30,code=\"sm_30,compute_30\"'];
 opts.mexConfig        = '' ;
 opts.mexCudaConfig    = '' ;
-opts.cudnnRoot        = 'local/cudnn' ;
+opts.cudnnRoot        = '/usr/local/cuda-8.0' ;
 opts.preCompileFn       = [] ;
 opts = vl_argparse(opts, varargin);
 
@@ -216,6 +216,7 @@ mex_src = {} ;
 % Files that are compiled as CPP or CU depending on whether GPU support
 % is enabled.
 if opts.enableGpu, ext = 'cu' ; else ext='cpp' ; end
+lib_src{end+1} = fullfile(root,'matlab','src','bits',['nnyoloregion.' ext]) ; % dlw
 lib_src{end+1} = fullfile(root,'matlab','src','bits',['data.' ext]) ;
 lib_src{end+1} = fullfile(root,'matlab','src','bits',['datamex.' ext]) ;
 lib_src{end+1} = fullfile(root,'matlab','src','bits',['nnconv.' ext]) ;
@@ -228,6 +229,7 @@ lib_src{end+1} = fullfile(root,'matlab','src','bits',['nnbnorm.' ext]) ;
 lib_src{end+1} = fullfile(root,'matlab','src','bits',['nnbias.' ext]) ;
 lib_src{end+1} = fullfile(root,'matlab','src','bits',['nnbilinearsampler.' ext]) ;
 lib_src{end+1} = fullfile(root,'matlab','src','bits',['nnroipooling.' ext]) ;
+mex_src{end+1} = fullfile(root,'matlab','src',['vl_nnyoloregion.' ext]) ;
 mex_src{end+1} = fullfile(root,'matlab','src',['vl_nnconv.' ext]) ;
 mex_src{end+1} = fullfile(root,'matlab','src',['vl_nnconvt.' ext]) ;
 mex_src{end+1} = fullfile(root,'matlab','src',['vl_nnpool.' ext]) ;

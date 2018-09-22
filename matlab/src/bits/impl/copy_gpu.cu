@@ -15,7 +15,7 @@ the terms of the BSD license (see the COPYING file).
 #include <string.h>
 
 template<typename type> __global__ void
-fill_kernel (type * data, type value, size_t size)
+fill_kernel (type * data, size_t size, type value)
 {
   int index = threadIdx.x + blockIdx.x * blockDim.x ;
   if (index < size) data[index] = value ;
@@ -58,11 +58,21 @@ namespace vl { namespace impl {
          size_t numElements,
          type value)
     {
-      fill_kernel <type>
-      <<<divideAndRoundUp(numElements, (size_t)VL_CUDA_NUM_THREADS), VL_CUDA_NUM_THREADS>>>
-      (dst, numElements, value) ;
 
-      cudaError_t error = cudaGetLastError() ;
+      cudaError_t error;
+      if(value == (type)0)
+      {
+        error = cudaMemset(dst, 0, numElements*sizeof(type));
+      }
+      else
+      {
+        fill_kernel <type>
+        <<<divideAndRoundUp(numElements, (size_t)VL_CUDA_NUM_THREADS), VL_CUDA_NUM_THREADS>>>
+        (dst, numElements, value) ;
+      }
+      
+
+      error = cudaGetLastError() ;
       if (error != cudaSuccess) {
         return VLE_Cuda ;
       }

@@ -657,7 +657,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mexErrMsgTxt("the number of gt does not match the number of feat");
     }
     
-    net.truth = (float *)malloc(sizeof(float)*batchSize*l.truths);
+    net.truth = (float *)mxMalloc(sizeof(float)*batchSize*l.truths);
     memset(net.truth, 0, sizeof(float)*batchSize*l.truths);
     for(int i = 0; i < batchSize; i++)
     {
@@ -760,7 +760,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     
     if(net.truth != NULL)
-        free(net.truth);
+        mxFree(net.truth);
     
 }
 

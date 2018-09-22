@@ -49,6 +49,11 @@ classdef YoloV2 < dagnn.ElementWise
             outputSizes{1} = [1 1 1 inputSizes{1}(4)] ;
         end
         
+        function rfs = getReceptiveFields(obj)
+            numInputs = numel(obj.net.layers(obj.layerIndex).inputs) ;
+            rfs = getReceptiveFields@dagnn.ElementWise(obj) ;
+            rfs = repmat(rfs, numInputs, 1) ;
+        end
         
         function obj = YoloV2(varargin)
             obj.load(varargin);
