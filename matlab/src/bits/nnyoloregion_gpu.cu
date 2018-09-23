@@ -515,7 +515,8 @@ void delta_region_class(type *output, int stride, type scale, int numClasses, in
 // noobject ------------------------------------------------------------
 template<typename type>
 __global__ void NoobjectKernel(type *derInput, type *output, int channel, int featH, int featW, int numAnchors, 
-                          int classes, int coords, type *biases, type *gts, YoloRegion::YoloRegionLayer layer, int vol)
+                          int classes, int coords, type *biases, type *gts, YoloRegion::YoloRegionLayer layer, int vol,
+                          type *avg_anyobj_data)
 {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
   if(tid >= vol)
@@ -555,7 +556,7 @@ __global__ void NoobjectKernel(type *derInput, type *output, int channel, int fe
 
   type tmp1;
   int obj_ofs = layer.coords * spatialSize;
-  //avg_anyobj += l.output[obj_index];
+  avg_anyobj_data[tid] += output[obj_ofs];
   tmp1 = output[obj_ofs]; // objectness
   derInput[obj_ofs] = -layer.noobject_scale * (0 - tmp1)*logistic_gradient(tmp1);
   if (layer.background) derInput[obj_ofs] = -layer.noobject_scale * (1 - tmp1)*logistic_gradient(tmp1);
@@ -580,12 +581,12 @@ __global__ void NoobjectKernel(type *derInput, type *output, int channel, int fe
 // object and biases matching kernel -----------------------------------
 template<typename type>
 __global__ void ObjectKernel(type *derInput, type *output, int channel, int featH, int featW, int numAnchors, 
-                          int classes, int coords, type *biases, type *gts, YoloRegion::YoloRegionLayer layer, int vol)
+                          int classes, int coords, type *biases, type *gts, YoloRegion::YoloRegionLayer layer, int vol,
+                          type *avg_iou_data, type *avg_cls_data, type *avg_obj_data, type *recall_data)
 {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
   if(tid >= vol)
   {
-    return;
   }
 
   int tmp;
@@ -648,9 +649,10 @@ __global__ void ObjectKernel(type *derInput, type *output, int channel, int feat
     ////
   }
 
-  //if(iou > 0.5) recall += 1;
-  //avg_iou += iou;
-  //avg_obj += output[(best_n*channel + coords)*spatialSize];
+  int idx = (bid * numAnchors + best_n) * spatialSize + widx*featH + hidx;
+  if(iou > 0.5) recall_data[idx] += 1;
+  avg_iou_data[idx] += iou;
+  avg_obj_data[idx] += output[(best_n*channel + coords)*spatialSize];
 
   derInput[obj_ofs] = -layer.object_scale * (1 - output[obj_ofs]) * logistic_gradient(output[obj_ofs]);
   if(layer.rescore)
@@ -681,7 +683,8 @@ template<vl::DataType dataType>
 struct YoloRegionBackwardGPU
 {
   vl::ErrorCode operator()(YoloRegion &op,
-                           Tensor &derInput,
+                           Tensor &derInput, Tensor &avg_iou, Tensor &avg_cls, 
+                           Tensor &avg_obj, Tensor &avg_anyobj, Tensor &recall, 
                            Tensor const &input)
   {
     typedef typename vl::DataTypeTraits<dataType>::type type ;
@@ -696,17 +699,12 @@ struct YoloRegionBackwardGPU
     int classes = op.classes;
 
     int chPerAnchor = coords + 1 + classes;
-
     int volume = batchSize * numAnchors * featH * featW;
-
     size_t workspaceSize = batchSize * featC * featH * featW;
-
     type *tmp;
-
     cudaError_t cudaErr;
 
     int objVol = batchSize * YOLO_MAX_NUM_GT_PER_IMAGE;
-
 
     // statics for training
     type avg_iou = 0;
@@ -715,7 +713,6 @@ struct YoloRegionBackwardGPU
     type avg_anyobj = 0;
     type recall = 0;
     int count = 0;
-
 /*
     printf("batchSize: %d\n", batchSize);
     printf("featC: %d\n", featC);
@@ -733,6 +730,13 @@ struct YoloRegionBackwardGPU
     type *biases_gpu, *gts_gpu;
 
     type * inputData = (type *)input.getMemory() ; /////////   for debug, no const
+
+    type *avg_iou_data = (type *)avg_iou.getMemory();
+    type *avg_cls_data = (type *)avg_cls.getMemory();
+    type *avg_obj_data = (type *)avg_obj.getMemory();
+    type *avg_anyobj_data = (type *)avg_anyobj.getMemory();
+    type *recall_data = (type *)recall.getMemory();
+
     // Compute derInputs.
     type *derInputData = (type *)derInput.getMemory() ;
     type *output = (type *)op.context.getWorkspace(vl::VLDT_GPU, workspaceSize*sizeof(type)) ; // tmp
@@ -881,11 +885,12 @@ struct YoloRegionBackwardGPU
     //cudaMemcpy(layer_gpu, &op.layer, sizeof(YoloRegion::YoloRegionLayer), cudaMemcpyHostToDevice);
     
     NoobjectKernel<<<divideAndRoundUp(volume, VL_CUDA_NUM_THREADS), VL_CUDA_NUM_THREADS>>>
-    (derInputData, output, chPerAnchor, featH, featW, numAnchors, classes, coords, biases_gpu, gts_gpu, op.layer, volume);
+    (derInputData, output, chPerAnchor, featH, featW, numAnchors, classes, 
+      coords, biases_gpu, gts_gpu, op.layer, volume, avg_anyobj_data);
 
-    
     ObjectKernel<<<divideAndRoundUp(objVol, VL_CUDA_NUM_THREADS), VL_CUDA_NUM_THREADS>>>
-    (derInputData, output, chPerAnchor, featH, featW, numAnchors, classes, coords, biases_gpu, gts_gpu, op.layer, objVol);
+    (derInputData, output, chPerAnchor, featH, featW, numAnchors, classes, 
+    coords, biases_gpu, gts_gpu, op.layer, objVol, );
 
     //operations<vl::VLDT_GPU, type>::copy(derInputData, output, workspaceSize);
 

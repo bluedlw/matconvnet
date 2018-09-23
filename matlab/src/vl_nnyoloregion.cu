@@ -232,10 +232,30 @@ void mexFunction(int nout, mxArray *out[],
   vl::DataType dataType = data.getDataType() ;
   vl::MexTensor output(context) ;
   vl::MexTensor derData(context) ;
+
+  ///////   training statics /////////////
+  vl::MexTensor avg_iou(context);
+  vl::MexTensor avg_cls(context);
+  vl::MexTensor avg_obj(context);
+  vl::MexTensor avg_anyobj(context);
+  vl::MexTensor recall(context);
+
+
   if (!backMode) {
     output.init(deviceType, dataType, data.getShape()) ;
   } else {
     derData.init(deviceType, dataType, data.getShape()) ;
+  }
+
+  if(backMode)
+  {
+    TensorShape shape = data.getShape();
+    shape.setDepth(numAnchors);
+    avg_iou.initWithZeros(deviceType, dataType, shape);
+    avg_cls.initWithZeros(deviceType, dataType, shape);
+    avg_obj.initWithZeros(deviceType, dataType, shape);
+    avg_anyobj.initWithZeros(deviceType, dataType, shape);
+    recall.initWithZeros(deviceType, dataType, shape);
   }
 
   if (verbosity > 0) {
@@ -271,7 +291,7 @@ void mexFunction(int nout, mxArray *out[],
   if (!backMode) {
     error = op.forward(output, data) ;
   } else {
-    error = op.backward(derData, data) ;
+    error = op.backward(derData, avg_iou, avg_cls, avg_obj, avg_anyobj, recall, data) ;
   }
 
   /* -------------------------------------------------------------- */
@@ -285,5 +305,10 @@ void mexFunction(int nout, mxArray *out[],
     out[OUT_RESULT] = derData.relinquish() ;
   } else {
     out[OUT_RESULT] = output.relinquish() ;
+    out[1] = avg_iou.relinquish();
+    out[2] = avg_cls.relinquish();
+    out[3] = avg_obj.relinquish();
+    out[4] = avg_anyobj.relinquish();
+    out[5] = recall.relinquish();
   }
 }
