@@ -60,7 +60,9 @@ struct YoloRegionBackward<vl::VLDT_CPU, dataType>
 {
   vl::ErrorCode operator()
   (YoloRegion &op,
-   Tensor &derInput,
+   Tensor &derInput,Tensor &avg_iou, 
+   Tensor &avg_cls, Tensor &avg_obj, 
+   Tensor &avg_anyobj, vl::Tensor &recall,
    Tensor const &input)
   {
 
@@ -142,9 +144,12 @@ YoloRegion::forward(vl::Tensor &output,
 }
 
 vl::ErrorCode
-YoloRegion::backward(vl::Tensor &derInput,
+YoloRegion::backward(vl::Tensor &derInput, Tensor &avg_iou, 
+                           Tensor &avg_cls, Tensor &avg_obj, 
+                           Tensor &avg_anyobj, Tensor &recall,
                      vl::Tensor const &input)
 {
-  return dispatch<YoloRegionBackward>()(*this,derInput,input) ;
+  return dispatch<YoloRegionBackward>()(*this,derInput, avg_iou, 
+                           avg_cls, avg_obj, avg_anyobj, recall, input) ;
 }
 
