@@ -304,12 +304,13 @@ void mexFunction(int nout, mxArray *out[],
   }
   if (backMode) {
     out[OUT_RESULT] = derData.relinquish() ;
-  } else {
-    out[OUT_RESULT] = output.relinquish() ;
     out[1] = avg_iou.relinquish();
     out[2] = avg_cls.relinquish();
     out[3] = avg_obj.relinquish();
     out[4] = avg_anyobj.relinquish();
     out[5] = recall.relinquish();
+  } else {
+    out[OUT_RESULT] = output.relinquish() ;
+    
   }
 }
