@@ -707,11 +707,11 @@ struct YoloRegionBackwardGPU
     int objVol = batchSize * YOLO_MAX_NUM_GT_PER_IMAGE;
 
     // statics for training
-    type avg_iou = 0;
-    type avg_cat = 0;
-    type avg_obj = 0;
-    type avg_anyobj = 0;
-    type recall = 0;
+    //type avg_iou = 0;
+    //type avg_cat = 0;
+    //type avg_obj = 0;
+    //type avg_anyobj = 0;
+    //type recall = 0;
     int count = 0;
 /*
     printf("batchSize: %d\n", batchSize);
@@ -890,7 +890,7 @@ struct YoloRegionBackwardGPU
 
     ObjectKernel<<<divideAndRoundUp(objVol, VL_CUDA_NUM_THREADS), VL_CUDA_NUM_THREADS>>>
     (derInputData, output, chPerAnchor, featH, featW, numAnchors, classes, 
-    coords, biases_gpu, gts_gpu, op.layer, objVol, );
+    coords, biases_gpu, gts_gpu, op.layer, objVol, avg_iou_data, avg_cls_data, avg_obj_data, recall_data);
 
     //operations<vl::VLDT_GPU, type>::copy(derInputData, output, workspaceSize);
 
