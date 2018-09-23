@@ -35,7 +35,9 @@ namespace vl { namespace nn {
     vl::ErrorCode forward(vl::Tensor &output,
                           vl::Tensor const &data) ;
 
-    vl::ErrorCode backward(vl::Tensor &derData,
+    vl::ErrorCode backward(vl::Tensor &derData, vl::Tensor &avg_iou, 
+                           vl::Tensor &avg_cls, vl::Tensor &avg_obj, 
+                           vl::Tensor &avg_anyobj, vl::Tensor &recall
                            vl::Tensor const &data) ;
     vl::Context& context ;
 
