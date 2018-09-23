@@ -73,7 +73,7 @@ classdef YoloRegion < dagnn.ElementWise
 
             recall_ = sum(recall(:)) / numObjs;
 
-            fprintf(" Region Avg IOU: %f, Class: %f, Obj: %f, No Obj: %f, Avg Recall: %f,  count: %d ",...
+            fprintf(' Region Avg IOU: %f, Class: %f, Obj: %f, No Obj: %f, Avg Recall: %f,  count: %d ',...
                     avg_iou_, avg_cls_, avg_obj_, avg_anyobj_, recall_, numObjs);
 
             derInputs{2} = [];
