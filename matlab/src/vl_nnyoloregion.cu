@@ -249,7 +249,8 @@ void mexFunction(int nout, mxArray *out[],
 
   if(backMode)
   {
-    TensorShape shape = data.getShape();
+    //vl::accumulate()
+    vl::TensorShape shape = data.getShape();
     shape.setDepth(numAnchors);
     avg_iou.initWithZeros(deviceType, dataType, shape);
     avg_cls.initWithZeros(deviceType, dataType, shape);
