@@ -406,8 +406,8 @@ box<type> get_region_box(type *data, int stride, int featH, int featW, int hidx,
   box<type> b;
   b.x = (wdix + data[0]) / featW;
   b.y = (hidx + data[stride]) / featH;
-  b.w = exp(data[2*stride]) * anchorW;
-  b.h = exp(data[3*stride]) * anchorH;
+  b.w = exp(data[2*stride]) * anchorW / featW;
+  b.h = exp(data[3*stride]) * anchorH / featH;
 
   return b;
 }
