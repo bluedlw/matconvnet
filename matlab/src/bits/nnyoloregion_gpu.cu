@@ -587,6 +587,7 @@ __global__ void ObjectKernel(type *derInput, type *output, int channel, int feat
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
   if(tid >= vol)
   {
+    return;
   }
 
   int tmp;
