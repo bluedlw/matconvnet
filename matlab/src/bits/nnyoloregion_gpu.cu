@@ -480,7 +480,7 @@ template<typename type>
 __forceinline__ __device__
 type delta_region_box(box<type> truth, type *x, int h, int w, int index, int hidx, int widx, type ah, type aw, type *delta, type scale, int stride)
 {
-    box<type> pred = get_region_box(x, stride, hidx, widx, w, h, ah, aw);
+    box<type> pred = get_region_box(x, stride, h, w, hidx, widx, ah, aw);
     type iou = box_iou(pred, truth);
 
     type tx = (truth.x*w - widx);
