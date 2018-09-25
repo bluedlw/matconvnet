@@ -641,7 +641,7 @@ __global__ void ObjectKernel(type *derInput, type *output, int channel, int feat
   }
 
   int box_ofs = best_n * channel * spatialSize;
-  int obj_ofs = coords * spatialSize;
+  int obj_ofs = box_ofs + coords * spatialSize;
   iou = delta_region_box(truth, output + box_ofs, featH, featW, 0, hidx, widx, ah, aw, derInput + box_ofs, 
             type(-layer.coord_scale)*(2 - truth.w*truth.h), spatialSize);
   
