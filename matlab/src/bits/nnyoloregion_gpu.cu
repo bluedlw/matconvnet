@@ -514,9 +514,10 @@ void delta_region_class(type *output, int stride, type scale, int numClasses, in
 
 // noobject ------------------------------------------------------------
 template<typename type>
-__global__ void NoobjectKernel(type *derInput, type *output, int channel, int featH, int featW, int numAnchors, 
-                          int classes, int coords, type *biases, type *gts, YoloRegion::YoloRegionLayer layer, int vol,
-                          type *avg_anyobj_data)
+__global__ void NoobjectKernel(type *derInput, type *output, int channel, int featH, int featW, 
+                               int numAnchors, int classes, int coords, type *biases, type *gts, 
+                               YoloRegion::YoloRegionLayer layer, int vol,
+                               type *avg_anyobj_data)
 {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
   if(tid >= vol)
@@ -580,9 +581,11 @@ __global__ void NoobjectKernel(type *derInput, type *output, int channel, int fe
 
 // object and biases matching kernel -----------------------------------
 template<typename type>
-__global__ void ObjectKernel(type *derInput, type *output, int channel, int featH, int featW, int numAnchors, 
-                          int classes, int coords, type *biases, type *gts, YoloRegion::YoloRegionLayer layer, int vol,
-                          type *avg_iou_data, type *avg_cls_data, type *avg_obj_data, type *recall_data)
+__global__ void ObjectKernel(type *derInput, type *output, int channel, int featH, int featW, 
+                             int numAnchors, int classes, int coords, type *biases, type *gts, 
+                             YoloRegion::YoloRegionLayer layer, int vol,
+                             type *avg_iou_data, type *avg_cls_data, type *avg_obj_data, 
+                             type *recall_data)
 {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
   if(tid >= vol)
@@ -601,9 +604,6 @@ __global__ void ObjectKernel(type *derInput, type *output, int channel, int feat
   box<type> truth = float_to_box(gts + truth_entry, 1);
   if(!truth.x) return;
 
-  type best_iou = 0;
-  int best_n = 0;
-
   int hidx = truth.y * featH;
   int widx = truth.x * featW;
 
@@ -616,13 +616,15 @@ __global__ void ObjectKernel(type *derInput, type *output, int channel, int feat
   truth_shift.y = 0;
 
   type ah, aw, iou;
-
+  type best_iou = 0;
+  int best_n = 0;
   for(int n = 0; n < numAnchors; n++)
   {
     aw = biases[2 * n];
     ah = biases[2 * n + 1];
     //int box_index = 1;
-    box<type> pred = get_region_box(output + n*channel*spatialSize, spatialSize, featH, featW, hidx, widx, ah, aw);
+    box<type> pred = get_region_box(output + n*channel*spatialSize, spatialSize, 
+                                    featH, featW, hidx, widx, ah, aw);
     if(layer.bias_match)
     {
       pred.w = aw / featW;
@@ -640,10 +642,13 @@ __global__ void ObjectKernel(type *derInput, type *output, int channel, int feat
     }
   }
 
+  aw = biases[best_n*2];
+  ah = biases[best_n+2+1];
   int box_ofs = best_n * channel * spatialSize;
   int obj_ofs = box_ofs + coords * spatialSize;
-  iou = delta_region_box(truth, output + box_ofs, featH, featW, 0, hidx, widx, ah, aw, derInput + box_ofs, 
-            type(-layer.coord_scale)*(2 - truth.w*truth.h), spatialSize);
+  iou = delta_region_box(truth, output + box_ofs, featH, featW, 0, hidx, widx, ah, aw, 
+                         derInput + box_ofs, type(-layer.coord_scale)*(2 - truth.w*truth.h), 
+                         spatialSize);
   
   if(coords > 4)
   {
