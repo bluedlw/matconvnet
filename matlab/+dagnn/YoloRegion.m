@@ -52,6 +52,8 @@ classdef YoloRegion < dagnn.ElementWise
             featW = size(inputs{1}, 2);
             featC = size(inputs{1}, 3);
             bs = size(inputs{1}, 4);
+            
+            numAnchors = size(obj.anchors, 1);
 
             numObjs = 0;
             for i = 1 : numel(inputs{2})

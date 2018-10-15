@@ -643,7 +643,7 @@ __global__ void ObjectKernel(type *derInput, type *output, int channel, int feat
   }
 
   aw = biases[best_n*2];
-  ah = biases[best_n+2+1];
+  ah = biases[best_n*2+1];
   int box_ofs = best_n * channel * spatialSize;
   int obj_ofs = box_ofs + coords * spatialSize;
   iou = delta_region_box(truth, output + box_ofs, featH, featW, 0, hidx, widx, ah, aw, 
